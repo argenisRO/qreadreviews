@@ -139,7 +139,8 @@ def login():
         if not result:
             return render_template('error.html', message="Incorrect Information")
 
-        # TODO: Add functionality to the 'Keep Me logged in' button
+        if keepon is not None:
+            session.permanent = True
 
         # Filling the Session with info for later reference
         session['user_id'] = db.execute("SELECT id FROM users WHERE username = :email",{"email": email}).fetchone().id
