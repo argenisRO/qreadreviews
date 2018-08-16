@@ -22,7 +22,7 @@ Session(app)
 
 # SQLALCHEMY engine fetched from a database hosted on Heroku
 # * The DB_URI is stored in an environment Variable
-engine = create_engine(getenv("DB_URI"))
+engine = create_engine(getenv("DATABASE_URL"))
 db = scoped_session(sessionmaker(bind=engine))
 
 # Wrapper Function to make sure a user is logged into the session
@@ -74,14 +74,15 @@ def register():
 
         if email is "" or username is "" or password is "" or confirm_pass is "":
             return render_template('error.html', message="Missing Information.")
-        elif db.execute("SELECT username FROM users WHERE username = :email OR username = :username", {"email": email, "username": username}).rowcount > 0:
+        elif db.execute("SELECT username FROM users WHERE username = :email OR username = :username",
+                       {"email": email, "username": username}).rowcount > 0:
             return render_template('error.html', message="Email or Username is already in use.")
         elif password != confirm_pass:
             return render_template('error.html', message="Passwords did not match.")
         else:
             # Storing the HASHED sha256 password into the database along with the other info
             db.execute("INSERT INTO users (email,username,password,date_created) VALUES (:email,:username,:password, current_timestamp)", \
-            {"email": email, "username": username, "password" : generate_password_hash(password, method='sha256')})
+                      {"email": email, "username": username, "password" : generate_password_hash(password, method='sha256')})
             db.commit()
             
             # Sessions are stored incase it's needed somewhere else in the code.
@@ -104,7 +105,6 @@ def login():
 
         # Compares the database password with the provided user password.
         # Will return a boolean
-
         result = db.execute("SELECT password FROM users WHERE email = :username OR username = :username", {"username": user}).fetchone()
         
         if result is None:
@@ -148,5 +148,4 @@ def handle_error(e):
     return render_template('error.html', message="Internal Server Error.")
 
 if __name__ == '__main__':
-    # Currently Running the server on debug mode for testing purposes
-    app.run(debug=True, port=5002)
+    app.run()
