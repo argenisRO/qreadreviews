@@ -40,25 +40,9 @@ def login_required(f):
 @app.route("/")
 @login_required
 def index():
-    data = {}
-
     # This query only returns 7 random entries for display on the index page
-    display = db.execute("SELECT isbn,title,author,year FROM books ORDER BY RANDOM() LIMIT 7").fetchall()
-
-    for isbn,title,author,year in display:
-        res = requests.get("https://www.goodreads.com/book/review_counts.json", params={"key": gr_key, "isbns": isbn}).json()
-
-        # Storing data from both the database and API into one dictionary
-        # To make it easier to call data through the rendered template
-        data[isbn] = {
-            'isbn' : isbn,
-            'title' : title,
-            'author' : author,
-            'year' : year,
-            'review_count' : res['books'][0]['reviews_count'],
-            'rating' : res['books'][0]['average_rating']
-        }
-    return render_template("index.html", sess=session, data=data)
+    display = db.execute("SELECT isbn,title,author,year,reviews_count,rating FROM books ORDER BY RANDOM() LIMIT 7").fetchall()
+    return render_template("index.html", sess=session, data=display)
 
 @app.route("/reviews/<book>", methods=['GET','POST'])
 @login_required
@@ -67,32 +51,16 @@ def reviews(book):
     # GET: For when the user is directed by a click on a title.
     if request.method == 'POST':
         user_input = request.form.get("user_search")
-        display = db.execute("SELECT * FROM books WHERE title LIKE :info OR author LIKE :info OR isbn LIKE :info", { "info" : str("%" + user_input + "%") }).fetchone()
+        display = db.execute("SELECT * FROM books WHERE title LIKE :info OR author LIKE :info OR isbn LIKE :info",\
+                            { "info" : str("%" + user_input + "%") }).fetchone()
         if display is None:
-            return render_template('error.html', message="No Matching Books Found. Please try again!")
+            return render_template('error.html', message="No Matching Books Found. Please try a different search!")
         
-        rev = requests.get("https://www.goodreads.com/book/isbn/ISBN?format=json", params={"format" : "json","user_id": 84048400, "isbns": display.isbn}).json()
-        data = {
-            'isbn' : display.isbn,
-            'title' : display.title,
-            'author' : display.author,
-            'year' : display.year,
-            'markup' : rev['reviews_widget']
-        }
-        
-        return render_template("reviews.html", sess=session, data=data)
+        return render_template("reviews.html", sess=session, data=display)
         
     else:
-        display = db.execute("SELECT isbn,title,author,year FROM books WHERE isbn = :isbn",{"isbn":book}).fetchone()
-        rev = requests.get("https://www.goodreads.com/book/isbn/ISBN?format=json", params={"format" : "json","user_id": 84048400, "isbns": display.isbn}).json()
-        data = {
-            'isbn' : display.isbn,
-            'title' : display.title,
-            'author' : display.author,
-            'year' : display.year,
-            'markup' : rev['reviews_widget']
-        }
-        return render_template("reviews.html", sess=session, data=data)
+        display = db.execute("SELECT * FROM books WHERE isbn = :isbn",{"isbn":book}).fetchone()
+        return render_template("reviews.html", sess=session, data=display)
 
 @app.route("/register", methods=['GET','POST'])
 def register():
@@ -100,22 +68,24 @@ def register():
     # GET: Display the form
     if request.method == 'POST':
         email = request.form.get("user_email")
+        username = request.form.get("user_name")
         password = request.form.get("user_pass")
         confirm_pass = request.form.get("user_confirm_pass")
 
-        if email is "" or password is "" or confirm_pass is "":
+        if email is "" or username is "" or password is "" or confirm_pass is "":
             return render_template('error.html', message="Missing Information.")
-        elif db.execute("SELECT username FROM users WHERE username = :username", {"username": email}).rowcount > 0:
-            return render_template('error.html', message="Email is already in use.")
+        elif db.execute("SELECT username FROM users WHERE username = :email OR username = :username", {"email": email, "username": username}).rowcount > 0:
+            return render_template('error.html', message="Email or Username is already in use.")
         elif password != confirm_pass:
             return render_template('error.html', message="Passwords did not match.")
         else:
-            # Storing the HASHED password into the database
-            db.execute("INSERT INTO users (username,password) VALUES (:username,:password)",{"username": email, "password" : generate_password_hash(password, method='sha256')})
+            # Storing the HASHED sha256 password into the database along with the other info
+            db.execute("INSERT INTO users (email,username,password,date_created) VALUES (:email,:username,:password, current_timestamp)", \
+            {"email": email, "username": username, "password" : generate_password_hash(password, method='sha256')})
             db.commit()
             
             # Sessions are stored incase it's needed somewhere else in the code.
-            session['user_id'] = db.execute("SELECT id FROM users WHERE username = :email",{"email": email}).fetchone()
+            session['user_id'] = db.execute("SELECT user_id FROM users WHERE email = :email",{"email": email}).fetchone()
             session['email'] = email
             session['logged_in'] = True
             return redirect("/")
@@ -128,23 +98,27 @@ def login():
     # '/Login' is the main page if the session is empty (Logged Out)
     session.clear()
     if request.method == 'POST':
-        email = request.form.get("login_user")
+        user = request.form.get("login_user")
         pasw = request.form.get("login_pass")
         keepon = request.form.get("keepon")
 
         # Compares the database password with the provided user password.
         # Will return a boolean
-        result = check_password_hash(db.execute("SELECT password FROM users WHERE username = :email",{"email": email}).fetchone().password, pasw)
-        
-        if not result:
-            return render_template('error.html', message="Incorrect Information")
 
+        result = db.execute("SELECT password FROM users WHERE email = :username OR username = :username", {"username": user}).fetchone()
+        
+        if result is None:
+            return render_template('error.html', message="No Such Account Found.")
+        elif not check_password_hash(result.password, pasw):
+            return render_template('error.html', message="Incorrect Information. Try Again")
+     
         if keepon is not None:
             session.permanent = True
 
         # Filling the Session with info for later reference
-        session['user_id'] = db.execute("SELECT id FROM users WHERE username = :email",{"email": email}).fetchone().id
-        session['email'] = email
+        session_data = db.execute("SELECT user_id, email FROM users WHERE username = :username OR email = :username", {"username": user}).fetchone()
+        session['user_id'] = session_data.user_id
+        session['email'] = session_data.email
         return redirect(url_for('index'))
     return render_template("login.html", sess=session)
 
@@ -153,6 +127,13 @@ def login():
 def logout():
     session.clear()
     return redirect(url_for('login'))
+
+
+@app.route("/top_books/")
+@login_required
+def top_books():
+    data = db.execute('SELECT * FROM books ORDER BY rating DESC LIMIT 50').fetchall()
+    return render_template('top_books.html', sess=session, data=data)
 
 
 @app.errorhandler(Exception)
@@ -168,4 +149,4 @@ def handle_error(e):
 
 if __name__ == '__main__':
     # Currently Running the server on debug mode for testing purposes
-    app.run(debug=True, port=5000)
+    app.run(debug=True, port=5002)

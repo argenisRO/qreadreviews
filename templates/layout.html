@@ -22,18 +22,17 @@
                 </a>
                 <ul class="navbar-nav mr-auto mt-2 mt-lg-0">
                     <li class="nav-item active">
-                        <a class="nav-link" href="/">Home
-                            <span class="sr-only">(current)</span>
-                        </a>
+                        <a class="nav-link" href="/">Home</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link disabled" href="#">My Favorites</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link disabled" href="#">My Page</a>
+                        <a class="nav-link" href="/top_books/">Top Books</a>
                     </li>
                 </ul>
                 {% if 'user_id' in sess %}
+                    <form action="{{ url_for('index') }}" class="form-inline my-2 my-lg-0">
+                        <button style="margin-right: 8px;" class="btn btn-info my-2 my-sm-0">Profile</button>
+                    </form>
+
                     <form action="{{ url_for('reviews', book=1) }}" class="form-inline my-2 my-lg-0" method="POST">
                             <input class="form-control mr-sm-2" name="user_search" type="search" placeholder="Search Books" aria-label="Search">
                             <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>

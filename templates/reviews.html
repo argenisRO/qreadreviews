@@ -4,5 +4,6 @@
 {% block body %}
     <h1 class="display-4">{{ data.title }}</h1>
     <h4>By {{ data.author }}</h4>
-    {{data.markup|safe}}
+    <p>Published in {{ data.year }}</p>
+    <p>Rating: {{ data.rating }}</p>
 {% endblock %}
