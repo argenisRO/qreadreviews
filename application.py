@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, redirect, session, url_for
 from flask_session import Session
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
+from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.exceptions import HTTPException
 from os import getenv
 import requests
@@ -109,7 +110,8 @@ def register():
         elif password != confirm_pass:
             return render_template('error.html', message="Passwords did not match.")
         else:
-            db.execute("INSERT INTO users (username,password) VALUES (:username,:password)",{"username": email, "password" :password})
+            # Storing the HASHED password into the database
+            db.execute("INSERT INTO users (username,password) VALUES (:username,:password)",{"username": email, "password" : generate_password_hash(password, method='sha256')})
             db.commit()
             
             # Sessions are stored incase it's needed somewhere else in the code.
@@ -130,8 +132,11 @@ def login():
         pasw = request.form.get("login_pass")
         keepon = request.form.get("keepon")
 
-        result = db.execute("SELECT * FROM users WHERE username = :email AND password = :password",{"email":email, "password":pasw}).fetchone()
-        if result is None:
+        # Compares the database password with the provided user password.
+        # Will return a boolean
+        result = check_password_hash(db.execute("SELECT password FROM users WHERE username = :email",{"email": email}).fetchone().password, pasw)
+        
+        if not result:
             return render_template('error.html', message="Incorrect Information")
 
         # TODO: Add functionality to the 'Keep Me logged in' button
