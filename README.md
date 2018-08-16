@@ -13,5 +13,5 @@ python3.7
 ```
 <sub><sup>* Will continue to add more in the future</sup></sub>
 
-A GoodReads API key is required to access fetch book info.
+A GoodReads API key is required to fetch book info.
 You can get a developer key at their [API page](https://www.goodreads.com/api/).
