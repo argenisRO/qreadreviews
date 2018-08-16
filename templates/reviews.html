@@ -1,0 +1,8 @@
+{% extends "layout.html" %}
+{% block title %}Reviews{% endblock %}
+
+{% block body %}
+    <h1 class="display-4">{{ data.title }}</h1>
+    <h4>By {{ data.author }}</h4>
+    {{data.markup|safe}}
+{% endblock %}

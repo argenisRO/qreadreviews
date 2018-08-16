@@ -1,0 +1,25 @@
+{% extends "layout.html" %}
+{% block title %}Home{% endblock %}
+
+{% block body %}
+
+    <h1 class="display-4">qReadReviews</h1>
+
+    <div class="container">
+        <div class="list-group">
+            {% for info in data %}
+                <a href="{{ url_for('reviews', book=data[info].isbn) }}" class="list-group-item list-group-item-action flex-column align-items-start">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h5 class="mb-1">{{ data[info].title }}</h5>
+                        <small>Published in {{ data[info].year }}</small>
+                    </div>
+                    <p class="mb-1">An average rating of {{ data[info].rating }} with a total of {{ data[info].review_count }} reviews.</p>
+                    <div class="d-flex w-100 justify-content-between">
+                        <small>{{ data[info].author }}</small>
+                    </div>
+                </a>
+            {% endfor %}
+        </div>
+    </div>
+
+{% endblock %}

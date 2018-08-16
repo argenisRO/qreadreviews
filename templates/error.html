@@ -1,0 +1,12 @@
+{% extends "layout.html" %}
+{% block meta %}
+    <meta http-equiv="refresh" content="5;url={{url_for('index')}}" />
+{% endblock meta %}
+{% block title %}Error{% endblock %}
+
+
+{% block body %}
+    <h1 class="display-4">Error</h1>
+    <p>{{ message }}</p>
+    <p><small>Redirecting you in 5 seconds!</small></p>
+{% endblock %}
