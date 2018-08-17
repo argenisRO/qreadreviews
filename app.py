@@ -27,7 +27,6 @@ Session(app)
 # * The DATABASE_URL is stored in an environment Variable
 engine = create_engine(getenv("DATABASE_URL"))
 db = scoped_session(sessionmaker(bind=engine))
-db.init_app(app)
 
 # Wrapper Function to make sure a user is logged into the session
 # Will return them to the login screen if condition failed
