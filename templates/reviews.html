@@ -4,6 +4,12 @@
 {% block body %}
     <h1 class="display-4">{{ data.title }}</h1>
     <h4>By {{ data.author }}</h4>
+    <form class="inline">
+            <button type="button" class="btn btn-info btn-xs">Write Review</button>
+        </form>     
+        <form action="{{ url_for('add_favorite', book=data.isbn) }}" class="inline" method="POST">
+            <button type="submit" class="btn btn-warning btn-xs">Add to Favorites</button>
+    </form>
     <p>Published in {{ data.year }}</p>
     <p>Rating: {{ data.rating }}</p>
 {% endblock %}

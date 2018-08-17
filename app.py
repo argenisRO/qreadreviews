@@ -1,3 +1,6 @@
+# qReadReviews
+# - Argenis Rodriguez
+
 from flask import Flask, render_template, request, redirect, session, url_for
 from flask_session import Session
 from sqlalchemy import create_engine
@@ -21,7 +24,7 @@ app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 
 # SQLALCHEMY engine fetched from a database hosted on Heroku
-# * The DB_URI is stored in an environment Variable
+# * The DATABASE_URL is stored in an environment Variable
 engine = create_engine(getenv("DATABASE_URL"))
 db = scoped_session(sessionmaker(bind=engine))
 
@@ -116,9 +119,9 @@ def login():
             session.permanent = True
 
         # Filling the Session with info for later reference
-        session_data = db.execute("SELECT user_id, email FROM users WHERE username = :username OR email = :username", {"username": user}).fetchone()
+        session_data = db.execute("SELECT user_id, username FROM users WHERE username = :username OR email = :username", {"username": user}).fetchone()
         session['user_id'] = session_data.user_id
-        session['email'] = session_data.email
+        session['username'] = session_data.username
         return redirect(url_for('index'))
     return render_template("login.html", sess=session)
 
@@ -136,6 +139,23 @@ def top_books():
     return render_template('top_books.html', sess=session, data=data)
 
 
+@app.route("/profile/<username>")
+@login_required
+def profile(username):
+    result = db.execute("SELECT title,author,year,isbn,rating FROM books JOIN favorites ON favorites.book_id = books.book_id JOIN users ON favorites.user_id = :user_id",
+    {"user_id": session['user_id']}).fetchall()
+    return render_template('profile.html', sess=session, data=result)
+
+
+@app.route("/add_favorite/<book>", methods=['POST'])
+@login_required
+def add_favorite(book):
+    book_id = db.execute("SELECT book_id FROM books WHERE isbn = :book",{"book": book}).fetchone().book_id
+    db.execute("INSERT INTO favorites(book_id, user_id) VALUES (:book_id, :user_id)",{"book_id": book_id, "user_id" : session['user_id']})
+    db.commit()
+    return redirect(url_for('index'))
+
+
 @app.errorhandler(Exception)
 def handle_error(e):
     # Global Error Handler
@@ -148,4 +168,4 @@ def handle_error(e):
     return render_template('error.html', message="Internal Server Error.")
 
 if __name__ == '__main__':
-    app.run()
+    app.run(debug=True, port=5001)

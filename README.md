@@ -7,9 +7,11 @@ Users are able to create an account, write reviews to books, and even store a pa
 ## Requirements
 ```
 flask
-flask_session
-sqlalchemy
-python3.7
+flask-Session
+sqlAlchemy
+werkzeug
+gunicorn
+requests
 ```
 <sub><sup>* Will continue to add more in the future</sup></sub>
 

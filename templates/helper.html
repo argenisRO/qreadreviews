@@ -1,0 +1,23 @@
+{% macro bookbox(isbn, title, author, rating, year, reviews_count) %}
+   
+<a href="{{ url_for('reviews', book=isbn) }}">
+    <div class="d-flex w-100 justify-content-between">
+        <h5 class="mb-1">{{ title }}</h5>
+        <small>Published in {{ year }}</small>
+    </div>
+    <p class="mb-1">An average rating of {{ rating }} with a total of {{ reviews_count }} reviews.</p> 
+</a>
+<div class="d-flex w-100 justify-content-sm-between">
+    <small>{{ author }}</small>
+    <div>
+        <form class="inline">
+            <button type="button" class="btn btn-info btn-xs">Write Review</button>
+        </form>     
+        <form action="{{ url_for('add_favorite', book=isbn) }}" class="inline" method="POST">
+            <button type="submit" class="btn btn-warning btn-xs">Add to Favorites</button>
+        </form>
+    </div>
+</div>
+
+{% endmacro %}
+

@@ -1,0 +1,14 @@
+{% extends "layout.html" %}
+{% block title %}Profile{% endblock %}
+
+{% block body %}
+    <h1 class="display-4">{{ sess['username'] }}'s User Page</h1>
+    <h4>Favorite Books</h4>
+    {% if data is defined %}
+        {% for book in data %}
+            <p>{{ book.title }} - {{ book.author }}</p>
+        {% endfor %}
+    {% else %}
+        <p>You have no favorites.</p>
+    {% endif %}
+{% endblock %}

@@ -1,4 +1,5 @@
 {% extends "layout.html" %}
+{% import 'helper.html' as codeblock %}
 {% block title %}Home{% endblock %}
 
 {% block body %}
@@ -9,16 +10,9 @@
     <div class="container">
         <div class="list-group">
             {% for info in data %}
-                <a href="{{ url_for('reviews', book=info.isbn) }}" class="list-group-item list-group-item-action flex-column align-items-start">
-                    <div class="d-flex w-100 justify-content-between">
-                        <h5 class="mb-1">{{ info.title }}</h5>
-                        <small>Published in {{ info.year }}</small>
-                    </div>
-                    <p class="mb-1">An average rating of {{ info.rating }} with a total of {{ info.reviews_count }} reviews.</p>
-                    <div class="d-flex w-100 justify-content-between">
-                        <small>{{ info.author }}</small>
-                    </div>
-                </a>
+            <div class="list-group-item list-group-item-action flex-column align-items-start">
+                {{ codeblock.bookbox(info.isbn ,info.title, info.author, info.rating, info.year, info.reviews_count) }}
+            </div>
             {% endfor %}
         </div>
     </div>
