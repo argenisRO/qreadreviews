@@ -142,7 +142,7 @@ def top_books():
 @app.route("/profile/<username>")
 @login_required
 def profile(username):
-    result = db.execute("SELECT title,author,year,isbn,rating FROM books JOIN favorites ON favorites.book_id = books.book_id JOIN users ON favorites.user_id = :user_id",
+    result = db.execute("SELECT title,author,year,isbn,rating FROM books NATURAL JOIN favorites WHERE favorites.user_id = :user_id",
     {"user_id": session['user_id']}).fetchall()
     return render_template('profile.html', sess=session, data=result)
 
