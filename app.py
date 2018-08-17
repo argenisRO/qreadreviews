@@ -169,4 +169,4 @@ def handle_error(e):
     return render_template('error.html', message="Internal Server Error.")
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5001)
+    app.run()
