@@ -25,6 +25,7 @@ Session(app)
 
 # SQLALCHEMY engine fetched from a database hosted on Heroku
 # * The DATABASE_URL is stored in an environment Variable
+db.init_app(app)
 engine = create_engine(getenv("DATABASE_URL"))
 db = scoped_session(sessionmaker(bind=engine))
 
